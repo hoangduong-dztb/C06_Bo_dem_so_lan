@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C06 — Bộ đếm số lần vượt ngưỡng trong cửa sổ 256 chu kỳ · Ghi chú thực hiện</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1a1d21; --muted:#5c6570; --line:#e3e7eb;
+  --accent:#1f5fa9; --accent-soft:#eef4fb; --code-bg:#f5f7f9;
+  --ok:#137a4d; --ok-bg:#e8f6ee; --warn:#8a5a00; --warn-bg:#fdf4e2;
+  --bad:#a52020; --bad-bg:#fceded; --open:#7a5ba8; --open-bg:#f3eefa;
+  --maxw:960px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15181c; --fg:#e6e9ec; --muted:#98a2ad; --line:#2a2f36;
+    --accent:#6fa8e0; --accent-soft:#1c2733; --code-bg:#1b1f24;
+    --ok:#5cc08d; --ok-bg:#16291f; --warn:#d8a54a; --warn-bg:#2a2314;
+    --bad:#e88b8b; --bad-bg:#2b1a1a; --open:#b79ad6; --open-bg:#241d2e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15181c; --fg:#e6e9ec; --muted:#98a2ad; --line:#2a2f36;
+  --accent:#6fa8e0; --accent-soft:#1c2733; --code-bg:#1b1f24;
+  --ok:#5cc08d; --ok-bg:#16291f; --warn:#d8a54a; --warn-bg:#2a2314;
+  --bad:#e88b8b; --bad-bg:#2b1a1a; --open:#b79ad6; --open-bg:#241d2e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 16px 96px}
+header.doc{
+  border-bottom:1px solid var(--line); margin-bottom:28px; padding:36px 0 22px;
+}
+header.doc .eyebrow{
+  font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted); font-weight:600; margin-bottom:10px;
+}
+header.doc h1{font-size:clamp(24px,4.4vw,34px); line-height:1.25; margin:0 0 14px}
+.badges{display:flex; flex-wrap:wrap; gap:7px; margin-top:6px}
+.badge{
+  font-size:12.5px; padding:3px 10px; border-radius:999px;
+  border:1px solid var(--line); color:var(--muted); background:var(--accent-soft);
+  white-space:nowrap;
+}
+.badge.ok{color:var(--ok); background:var(--ok-bg); border-color:transparent}
+.badge.warn{color:var(--warn); background:var(--warn-bg); border-color:transparent}
+.badge.bad{color:var(--bad); background:var(--bad-bg); border-color:transparent}
+.badge.open{color:var(--open); background:var(--open-bg); border-color:transparent}
+nav.toc{
+  border:1px solid var(--line); border-radius:10px; padding:16px 20px;
+  margin:0 0 32px; background:var(--accent-soft);
+}
+nav.toc p{margin:0 0 8px; font-weight:700; font-size:13px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted)}
+nav.toc ul{margin:0; padding-left:20px}
+nav.toc li{margin:3px 0}
+nav.toc a{color:var(--fg); text-decoration:none}
+nav.toc a:hover{color:var(--accent); text-decoration:underline}
+nav.toc ul ul{padding-left:18px; font-size:14.5px}
+h2{font-size:22px; margin:40px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line)}
+h3{font-size:18px; margin:28px 0 8px}
+h4{font-size:16px; margin:22px 0 6px; color:var(--muted)}
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{padding-left:24px}
+li{margin:4px 0}
+code{
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  font-size:.9em; background:var(--code-bg); padding:1.5px 5px; border-radius:4px;
+}
+pre{
+  background:var(--code-bg); border:1px solid var(--line); border-radius:8px;
+  padding:14px 16px; overflow-x:auto; line-height:1.55; font-size:13.5px;
+}
+pre code{background:none; padding:0; font-size:inherit}
+blockquote{
+  margin:16px 0; padding:2px 18px; border-left:3px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0; color:var(--fg);
+}
+blockquote p{margin:10px 0}
+.tablewrap{overflow-x:auto; margin:16px 0; -webkit-overflow-scrolling:touch}
+table{border-collapse:collapse; width:100%; font-size:14.5px; min-width:420px}
+th,td{border:1px solid var(--line); padding:7px 11px; text-align:left; vertical-align:top}
+th{background:var(--accent-soft); font-weight:650; white-space:nowrap}
+tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--code-bg) 55%, transparent)}
+hr{border:0; border-top:1px solid var(--line); margin:34px 0}
+footer.doc{
+  margin-top:56px; padding-top:18px; border-top:1px solid var(--line);
+  color:var(--muted); font-size:13.5px;
+}
+.themebtn{
+  position:fixed; right:14px; bottom:14px; z-index:10;
+  border:1px solid var(--line); background:var(--bg); color:var(--muted);
+  border-radius:999px; padding:8px 14px; font-size:13px; cursor:pointer;
+}
+.themebtn:hover{color:var(--fg)}
+@media (max-width:640px){
+  .wrap{padding:0 16px 72px}
+  header.doc{padding:26px 0 18px}
+  nav.toc{padding:14px 16px}
+}
+@media print{
+  .themebtn{display:none}
+  nav.toc{break-inside:avoid}
+  pre,table,blockquote{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="doc">
+  <div class="eyebrow">RTL2GDS · Đề C06 · Ghi chú thực hiện</div>
+  <h1>C06 — Bộ đếm số lần vượt ngưỡng trong cửa sổ 256 chu kỳ · Ghi chú thực hiện</h1>
+  <div class="badges"><span class="badge ">C · Ngưỡng, cảnh báo và giám sát</span><span class="badge ">Độ khó: Trung bình</span><span class="badge ">Loại mạch: Tuần tự</span><span class="badge ok">Mô phỏng: PASS</span><span class="badge ">Tổng hợp: 113 cell · 27 FF</span><span class="badge ">Đường tới hạn: 4,11 ns</span><span class="badge warn">Physical design: CHƯA CHẠY</span></div>
+</header>
+<nav class="toc"><p>Mục lục</p><ul><li><a href="#1-bai-toan-nay-thuc-chat-la-gi">1. Bài toán này thực chất là gì</a></li><li><a href="#2-ban-chat-ky-thuat-co-che-hoat-dong">2. Bản chất kỹ thuật — cơ chế hoạt động</a></li><li><a href="#3-doc-ma-nguon-rtl-lam-gi-tung-dong-quan-trong">3. Đọc mã nguồn: RTL làm gì, từng dòng quan trọng</a></li><li><a href="#4-vi-sao-chon-kien-truc-nay">4. Vì sao chọn kiến trúc này</a></li><li><a href="#5-cach-thuc-hien-lo-trinh-8-buoc-tu-dac-ta-toi-gdsii">5. Cách thực hiện — lộ trình 8 bước từ đặc tả tới GDSII</a></li><li><a href="#6-so-lieu-that-da-do-duoc-va-cach-doc-chung">6. Số liệu thật đã đo được và cách đọc chúng</a></li><li><a href="#7-tra-loi-cac-cau-hoi-ky-thuat-cua-charter-muc-2">7. Trả lời các câu hỏi kỹ thuật của Charter (mục 2)</a></li><li><a href="#8-tra-loi-cau-phan-tich-rieng-charter-muc-9">8. Trả lời câu phân tích riêng (Charter mục 9)</a></li><li><a href="#9-nhung-cho-sinh-vien-hay-sai-va-cach-phat-hien">9. Những chỗ sinh viên hay sai và cách phát hiện</a></li><li><a href="#10-cau-hoi-mentor-nen-dat-khi-bao-ve">10. Câu hỏi mentor nên đặt khi bảo vệ</a></li><li><a href="#11-gioi-han-da-chung-minh-duoc-gi-chua-chung-minh-duoc-gi">11. Giới hạn: đã chứng minh được gì, chưa chứng minh được gì</a></li></ul></nav>
+<main>
+<hr>
+<h2 id="1-bai-toan-nay-thuc-chat-la-gi">1. Bài toán này thực chất là gì</h2>
+<p>Bỏ hết vỏ ứng dụng đi, C06 là bài toán <strong>nén dữ liệu có mất mát theo lô</strong>: mỗi 256 chu kỳ
+nó nhận 256 × 8 = 2048 bit và trả ra <strong>9 bit</strong>. Tỷ số nén 227:1. Cái quyết định chất lượng
+khối không phải phép cộng — mà là <strong>chọn đúng thông tin nào được giữ lại</strong>.</p>
+<p>Thông tin giữ lại ở đây là: <em>“có bao nhiêu mẫu trong lô vượt ngưỡng”</em>. Không giữ: mẫu nào,
+lúc nào, vượt bao nhiêu, kéo dài bao lâu. Với bài toán giám sát rung máy công nghiệp
+(Charter mục 1), lựa chọn đó hợp lý — người vận hành cần biết <em>máy rung mạnh bao nhiêu lần
+trong giây vừa rồi</em>, không cần dạng sóng.</p>
+<p>Vì tỷ số nén lớn, <strong>mọi lỗi một đơn vị đều không thể phát hiện từ bên ngoài</strong>. Nếu khối
+đếm thiếu một lần trong 256, kết quả vẫn trông hợp lý. Đây là lý do đề này khó hơn vẻ
+ngoài: nó không có cơ chế tự phát hiện sai, nên tính đúng phải được <strong>chứng minh bằng cấu
+trúc</strong>, không phải bằng cảm giác “chạy thấy ổn”.</p>
+<p>Hai ràng buộc làm bài toán có hình hài cụ thể:</p>
+<ul>
+<li><strong>Cửa sổ nhảy, không trượt</strong> (Charter mục 3 loại cửa sổ trượt khỏi phạm vi). Khác biệt về
+  chi phí là khổng lồ: cửa sổ trượt cần nhớ 256 mẫu (~2048 FF), cửa sổ nhảy chỉ cần nhớ
+  <strong>một con số</strong> (9 FF).</li>
+<li><strong>Không có chu kỳ chết.</strong> Cửa sổ <code>w+1</code> bắt đầu ngay ở chu kỳ sau khi cửa sổ <code>w</code> kết thúc.
+  Ràng buộc này chính là nguồn gốc của mọi cái bẫy trong đề.</li>
+</ul>
+<h2 id="2-ban-chat-ky-thuat-co-che-hoat-dong">2. Bản chất kỹ thuật — cơ chế hoạt động</h2>
+<p>Khối gồm <strong>hai dòng chảy độc lập gặp nhau đúng một lần mỗi 256 chu kỳ</strong>:</p>
+<ul>
+<li><strong>Dòng thời gian</strong> (<code>window_count</code>, 8 FF) đếm tự do 0→255→0. Nó <strong>không nhìn dữ liệu một
+  lần nào</strong>. Giá trị của nó ở chu kỳ <code>n</code> luôn đúng bằng <code>n mod 256</code>.</li>
+<li><strong>Dòng dữ liệu</strong> (<code>event_count</code>, 9 FF) tích luỹ số sự kiện.</li>
+</ul>
+<p>Dòng thời gian sinh ra một tín hiệu điều khiển duy nhất — <code>terminal</code> — để đóng mở dòng dữ
+liệu. Quan hệ là <strong>một chiều tuyệt đối</strong>: dữ liệu không bao giờ ảnh hưởng ngược lên thời
+điểm chốt. Đây là tính chất kiến trúc đáng giá nhất của C06, vì nó cho ba bảo đảm miễn phí:
+thời điểm <code>window_done</code> tiên đoán được tuyệt đối; không thể deadlock; và nếu một bit của
+<code>window_count</code> bị lật thì máy vẫn tự phục hồi trong ≤ 256 chu kỳ (chỉ lệch pha cửa sổ, không
+có trạng thái chết — xem <code>fsm.md</code> §5).</p>
+<p><strong>Cơ chế then chốt nằm ở đúng một chu kỳ: chu kỳ kết thúc cửa sổ.</strong> Ở chu kỳ đó, ba việc
+phải xảy ra <strong>đồng thời</strong>: chốt kết quả, xoá bộ đếm sự kiện, xoá bộ đếm vị trí. Việc chốt
+phải lấy giá trị <strong>cũ</strong> của bộ đếm <strong>cộng thêm sự kiện của chính chu kỳ đó</strong>. Nếu chốt giá
+trị cũ mà quên cộng, mất đúng 1 lần đếm — và chỉ mất khi mẫu cuối cửa sổ tình cờ là sự
+kiện, tức 99 % ca kiểm thử vẫn PASS. Nếu xoá trước rồi mới chốt, mất toàn bộ cửa sổ.</p>
+<p>Điểm thứ hai, ít ai để ý: <strong>cái đắt của C06 không phải bộ đếm, mà là bộ so sánh ngưỡng.</strong>
+Trên đường tới hạn thật, phép so sánh <code>sample_in &gt; threshold</code> chiếm <strong>2,45 ns trong 3,11 ns</strong>
+độ trễ logic — gấp năm lần phần cộng dồn. Lý do có tính nguyên lý: so sánh hai <strong>biến</strong> cần
+carry lan nối tiếp qua 8 tầng (<code>abc</code> phải dùng 6 cell <code>maj3_1</code> nối tiếp, mỗi cái ~0,35 ns),
+trong khi cộng với <strong>hằng số</strong> <code>+0/+1</code> biến carry thành hàm AND thuần, gom được thành cây
+(<code>nor4_1</code> + <code>nand4_1</code>, chỉ 2 tầng). <strong>Cộng với hằng số rẻ; so sánh hai biến đắt ngang cộng
+hai biến.</strong> Tên đề đánh lừa người đọc nhìn vào bộ đếm, trong khi nút thắt thật nằm ở phép
+so sánh.</p>
+<h2 id="3-doc-ma-nguon-rtl-lam-gi-tung-dong-quan-trong">3. Đọc mã nguồn: RTL làm gì, từng dòng quan trọng</h2>
+<p>Toàn bộ thiết kế là <strong>41 dòng</strong>. Ba đoạn quan trọng nhất:</p>
+<p><strong>(a) Ba dây tổ hợp — dòng 15–19:</strong></p>
+<pre><code class="language-systemverilog">always_comb begin
+    event_now = (sample_in &gt; threshold);
+    terminal  = (window_count == 8'd255);
+    completed_count = {1'b0, event_count} + {{8{1'b0}}, event_now};
+end
+</code></pre>
+<p><code>completed_count</code> là dây quan trọng nhất trong file. Nó được <strong>mở rộng lên 9 bit trước khi
+cộng</strong> (<code>{1'b0, event_count}</code>), nên phép cộng không thể tràn. Và nó có <strong>một nguồn, hai
+đích</strong> — chỗ tiết kiệm phần cứng chính của đề: một mạch cộng duy nhất phục vụ cả đường tích
+luỹ lẫn đường chốt.</p>
+<p><strong>(b) Chu kỳ kết thúc — dòng 30–34:</strong></p>
+<pre><code class="language-systemverilog">if (terminal) begin
+    result_count &lt;= completed_count;   // ① chốt (giá trị CŨ + sự kiện chu kỳ này)
+    window_count &lt;= 8'd0;              // ② xoá vị trí
+    event_count  &lt;= 9'd0;              // ③ xoá tích luỹ
+    window_done  &lt;= 1'b1;
+end
+</code></pre>
+<p>Bốn phép gán <strong>không chặn</strong> (<code>&lt;=</code>) nên mọi vế phải được tính từ giá trị <strong>cũ</strong>, rồi mới
+đồng loạt cập nhật. Chính điều đó làm ① và ③ không đánh nhau dù cùng chạm <code>event_count</code>.
+Nếu đổi sang <code>=</code>, kết quả sẽ là <code>0 + event_now</code> thay vì tổng cả cửa sổ. Đây đúng là cái bẫy
+Charter mục 10 nêu tên.</p>
+<p><strong>(c) Mẫu “gán mặc định” — dòng 28:</strong></p>
+<pre><code class="language-systemverilog">window_done &lt;= 1'b0;                   // mặc định
+if (terminal) begin … window_done &lt;= 1'b1; end   // ghi đè
+</code></pre>
+<p>Hai phép gán tới cùng một tín hiệu trong cùng một khối <code>always_ff</code>: phép cuối thắng. Điều
+này <strong>không</strong> sinh thêm phần cứng — trình tổng hợp rút gọn thành <code>window_done &lt;= terminal</code>,
+và netlist xác nhận: <code>_189_</code> nhận <code>D</code> thẳng từ mạng <code>terminal</code>. Mẫu code này đáng học vì nó
+bảo đảm tín hiệu không bao giờ suy ra latch và không bao giờ dính <code>X</code>.</p>
+<p><strong>Điều RTL <em>không</em> làm, cũng quan trọng ngang:</strong> không chốt <code>threshold</code> (tầng ngoài phải
+giữ ổn định); không có <code>sample_valid</code> (mỗi chu kỳ clock đều là một mẫu); không có bộ chia
+tần (“256 chu kỳ” chỉ bằng “một giây” nếu <code>f_clk ≈ 256 Hz</code>).</p>
+<h2 id="4-vi-sao-chon-kien-truc-nay">4. Vì sao chọn kiến trúc này</h2>
+<p>Kiến trúc “hai bộ đếm + một thanh ghi chốt” được Charter mục 9 và mục 10 ấn định gián tiếp,
+nhưng nó cũng là lựa chọn đúng nếu tự thiết kế lại:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Quyết định</th>
+<th>Lý do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bộ đếm vị trí <strong>tự do</strong>, không có enable</td>
+<td>Làm thời điểm chốt độc lập hoàn toàn với dữ liệu → tiên đoán được, không deadlock, tự phục hồi sau SEU</td>
+</tr>
+<tr>
+<td>Bộ đếm <strong>nhị phân</strong> 8 bit làm biến trạng thái FSM</td>
+<td>256 trạng thái với 8 FF, <strong>0 mã thừa</strong>, không cần nhánh <code>default</code> chống treo. One-hot sẽ cần 256 FF</td>
+</tr>
+<tr>
+<td><strong>Một</strong> mạch cộng dùng chung hai đích</td>
+<td>Tiết kiệm cả một bộ cộng 9 bit</td>
+</tr>
+<tr>
+<td>Thanh ghi chốt <strong>tách rời</strong> bộ đếm sự kiện</td>
+<td>Cho tầng ngoài <strong>256 chu kỳ</strong> để đọc thay vì 1 chu kỳ — không cần bắt tay, không cần FIFO</td>
+</tr>
+<tr>
+<td><code>terminal</code> so với <strong>hằng số</strong> 255, không so với thanh ghi</td>
+<td>Mạch AND8 rẻ, và cửa sổ độ dài cố định đúng phạm vi Charter</td>
+</tr>
+</tbody>
+</table></div>
+<p>Cái giá: 9 FF cho thanh ghi chốt, tức <strong>một phần ba</strong> số flip-flop, trong một thiết kế mà
+flip-flop chiếm <strong>92,8 %</strong> công suất. Đó là đánh đổi lớn nhất của đề và nó <strong>đúng chỉ khi</strong>
+tầng ngoài không đọc được đúng nhịp — xem <code>tradeoff.md</code> §2, phương án P1.</p>
+<h2 id="5-cach-thuc-hien-lo-trinh-8-buoc-tu-dac-ta-toi-gdsii">5. Cách thực hiện — lộ trình 8 bước từ đặc tả tới GDSII</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th style="text-align: center;">Bước</th>
+<th>Việc</th>
+<th>Đầu ra</th>
+<th style="text-align: center;">Trạng thái</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td>Suy bảng hành vi và 9 invariant từ Charter mục 1 + 8</td>
+<td><code>02_SPECIFICATION/functional_spec.md</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td>Viết mô hình chuẩn <strong>Python</strong> trước, độc lập RTL</td>
+<td><code>reference_model.py</code> — PASS</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td>Viết RTL 41 dòng; chú ý gán không chặn ở chu kỳ chốt</td>
+<td><code>c06_core.sv</code></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td>Viết testbench tự kiểm, tập trung vào biên cửa sổ (chu kỳ 1, 255, 256)</td>
+<td><code>c06_core_tb.sv</code> — <strong>PASS</strong></td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td>Tổng hợp sang sky130, đọc <code>synth_stat.txt</code>, <strong>đối chiếu số FF với dự đoán</strong></td>
+<td>113 cell · 27 FF · 1012,2208 µm²</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: center;">6</td>
+<td>Ràng buộc SDC (clock 10 ns, IO delay 1 ns — <strong>giả định khởi điểm</strong>), chạy STA</td>
+<td>arrival 4,11 ns · slack 5,76 ns</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: center;">7</td>
+<td>Ước lượng công suất, đọc tỷ lệ tuần tự / tổ hợp</td>
+<td>1,22e-04 W · seq 92,8 %</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td style="text-align: center;">8</td>
+<td>P&amp;R bằng LibreLane + PDK sky130A, rồi STA sau routing</td>
+<td>—</td>
+<td style="text-align: center;">⬜ <strong>CHƯA CHẠY</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Bước 5 là bước dạy học quan trọng nhất: <strong>dự đoán số flip-flop trước khi chạy Yosys</strong>, rồi
+so. Dự đoán 8 + 9 + 9 + 1 = 27, công cụ cho 27 — khớp tuyệt đối. Nếu lệch, hoặc bản thân
+đọc RTL sai, hoặc có tín hiệu bị suy ra latch.</p>
+<h2 id="6-so-lieu-that-da-do-duoc-va-cach-doc-chung">6. Số liệu thật đã đo được và cách đọc chúng</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Chỉ số</th>
+<th style="text-align: right;">Giá trị</th>
+<th>Công cụ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mô hình Python</td>
+<td style="text-align: right;">PASS</td>
+<td>CPython 3</td>
+</tr>
+<tr>
+<td>Mô phỏng RTL</td>
+<td style="text-align: right;"><strong>PASS</strong></td>
+<td>Icarus Verilog 12.0</td>
+</tr>
+<tr>
+<td>Số cell</td>
+<td style="text-align: right;"><strong>113</strong></td>
+<td>Yosys 0.33</td>
+</tr>
+<tr>
+<td>Flip-flop</td>
+<td style="text-align: right;"><strong>27</strong></td>
+<td>Yosys 0.33</td>
+</tr>
+<tr>
+<td>Diện tích</td>
+<td style="text-align: right;"><strong>1012,2208 µm²</strong></td>
+<td>Yosys 0.33</td>
+</tr>
+<tr>
+<td>Đường tới hạn</td>
+<td style="text-align: right;"><code>sample_in[0]</code> → <code>_198_</code> (= <code>result_count[8]</code>), 13 cell</td>
+<td>OpenSTA 3.1.0</td>
+</tr>
+<tr>
+<td>Data arrival</td>
+<td style="text-align: right;"><strong>4,11 ns</strong></td>
+<td>OpenSTA 3.1.0</td>
+</tr>
+<tr>
+<td>Slack @ 10 ns</td>
+<td style="text-align: right;"><strong>5,76 ns</strong> (MET) · WNS/TNS 0,00</td>
+<td>OpenSTA 3.1.0</td>
+</tr>
+<tr>
+<td>Công suất</td>
+<td style="text-align: right;"><strong>1,22e-04 W</strong> · tuần tự 92,8 % · tổ hợp 7,2 %</td>
+<td>OpenSTA 3.1.0</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Những số này CHỨNG MINH được:</strong>
+RTL tổng hợp được thành 113 standard cell sky130 thật; số ô nhớ đúng bằng 27 như đọc từ mã;
+với ràng buộc giả định (10 ns, IO 1 ns, góc <code>tt_025C_1v80</code>, clock lý tưởng), đường dài nhất
+tới hạn còn dư 5,76 ns; và testbench chạy hết không vi phạm assertion nào.</p>
+<p><strong>Những số này KHÔNG chứng minh:</strong>
+(1) Không chứng minh tần số tối đa — chưa có ký sinh RC, chưa CTS nên <code>skew = 0</code>, và mới
+<strong>một</strong> góc PVT. Góc <code>ss</code> sẽ chậm hơn đáng kể. (2) Không chứng minh diện tích cuối — 1012 µm²
+là tổng diện tích cell, chưa kể hàng, chưa kể dây. (3) Không chứng minh thiết kế đúng —
+chỉ chứng minh nó đúng <strong>trên các ca đã viết</strong>; <code>corner_cases.md</code> §5 liệt kê 8 ca còn
+thiếu, trong đó ca “xen kẽ” và ca “kết quả 0” là <strong>bắt buộc theo Charter mục 8</strong>. (4) Con
+số công suất dùng hoạt động <strong>mặc định</strong>, không phải VCD thật.</p>
+<p><strong>Một chi tiết hay bị báo sai:</strong> trong 4,11 ns arrival có <strong>1,00 ns là <code>set_input_delay</code></strong>
+— một giả định, không phải độ trễ của mạch. Phần do C06 gây ra chỉ <strong>3,11 ns</strong>.</p>
+<h2 id="7-tra-loi-cac-cau-hoi-ky-thuat-cua-charter-muc-2">7. Trả lời các câu hỏi kỹ thuật của Charter (mục 2)</h2>
+<p><strong>Câu 1 — Hai bộ đếm song song, mỗi bộ cần bao nhiêu bit?</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Bộ đếm</th>
+<th>Dải giá trị cần biểu diễn</th>
+<th style="text-align: right;">Bit <strong>cần</strong></th>
+<th style="text-align: right;">Bit <strong>RTL dùng</strong></th>
+<th style="text-align: right;">Đo trong netlist</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Đếm vị trí cửa sổ</td>
+<td>0…255 (256 giá trị)</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">8 (<code>_172_</code>…<code>_179_</code>)</td>
+</tr>
+<tr>
+<td>Đếm sự kiện</td>
+<td>0…<strong>255</strong> (xem dưới)</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;"><strong>9</strong></td>
+<td style="text-align: right;">9 (<code>_180_</code>…<code>_188_</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Câu trả lời tinh tế nằm ở bộ đếm sự kiện. Trực giác nói “cửa sổ 256 mẫu → tối đa 256 →
+cần 9 bit”. Nhưng đọc kỹ RTL: một cửa sổ chỉ có <strong>255</strong> cạnh đi vào nhánh không-kết-thúc
+(<code>window_count</code> = 0…254); ở cạnh thứ 256 giá trị 256 <strong>không bao giờ vào <code>event_count</code></strong>,
+nó đi thẳng vào <code>result_count</code> qua dây tổ hợp <code>completed_count</code>. Vậy <code>event_count ≤ 255</code> và
+<strong><code>event_count[8]</code> luôn bằng 0</strong> (INV-7). 8 bit là đủ; RTL dùng 9 nên có <strong>một flip-flop
+chứng minh được là hằng số</strong> — Yosys không gỡ được vì nó là cổng ra của module top.</p>
+<p><strong>Câu 2 — Thời điểm chốt nằm ở đâu, vì sao chốt sai một chu kỳ là hỏng số liệu?</strong></p>
+<p>Nằm ở đúng cạnh clock có <code>window_count == 255</code> (dòng 30). Ba kiểu sai một chu kỳ và hậu quả:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Sai</th>
+<th>Hậu quả</th>
+<th>Ca phát hiện</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chốt <code>event_count</code> thay vì <code>event_count + event_now</code></td>
+<td>Mất <strong>đúng 1</strong> khi mẫu cuối là sự kiện</td>
+<td>Sự kiện đặt tại chu kỳ 256 (testbench dòng 43)</td>
+</tr>
+<tr>
+<td>Xoá trước, chốt sau (dùng <code>=</code>)</td>
+<td>Mất <strong>toàn bộ</strong> cửa sổ</td>
+<td>Cửa sổ có ≥ 2 sự kiện (testbench cửa sổ 1)</td>
+</tr>
+<tr>
+<td><code>terminal</code> đặt ở 254 hoặc 256</td>
+<td>Cửa sổ dài 255 hoặc 257; sự kiện rơi nhầm cửa sổ</td>
+<td>Sự kiện ở <strong>cả</strong> 255 và 256 + kiểm cửa sổ kế (dòng 42–59)</td>
+</tr>
+</tbody>
+</table></div>
+<p>“Hỏng số liệu” ở đây rất cụ thể: vì khối nén 2048 bit xuống 9 bit, <strong>không có cách nào phát
+hiện lỗi từ giá trị đầu ra</strong>. Một khối đếm thiếu 1 trong 256 vẫn cho kết quả trông hợp lý
+mãi mãi.</p>
+<p><strong>Câu 3 — Tổng ô nhớ dự đoán, báo cáo có khớp không?</strong></p>
+<p>Dự đoán từ RTL: 8 + 9 + 9 + 1 = <strong>27</strong>. Đo được: <code>dfxtp_1 × 27</code>. <strong>Khớp tuyệt đối.</strong> Nhưng
+<strong>không khớp Charter mục 10</strong> (“8+8+8 ≈ 24–26 ô nhớ”), vượt 1 ô. Hai nguyên nhân cộng lại:
+<code>event_count</code> và <code>result_count</code> rộng 9 bit thay vì 8 (+2), còn <code>window_done</code> là một FF mà
+ước lượng 8+8+8 của Charter bỏ quên (+1) — tổng 24 + 2 + 1 = 27.</p>
+<h2 id="8-tra-loi-cau-phan-tich-rieng-charter-muc-9">8. Trả lời câu phân tích riêng (Charter mục 9)</h2>
+<blockquote>
+<p><em>“Thiết kế có hai bộ đếm và một thanh ghi chốt. Bóc tách xem mỗi phần chiếm bao nhiêu
+flip-flop, tổng cộng có khớp với 8+8+8 không.”</em></p>
+</blockquote>
+<p>Bóc tách bằng <strong>tên instance thật trong <code>06_GDSII/synthesis/netlist.v</code></strong>, không phải ước lượng:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Phần</th>
+<th>Instance netlist</th>
+<th style="text-align: right;">FF</th>
+<th style="text-align: right;">Charter dự kiến</th>
+<th style="text-align: right;">Chênh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bộ đếm vị trí cửa sổ (<code>window_count[7:0]</code>)</td>
+<td><code>_172_</code> … <code>_179_</code></td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Bộ đếm sự kiện (<code>event_count[8:0]</code>)</td>
+<td><code>_180_</code> … <code>_188_</code></td>
+<td style="text-align: right;"><strong>9</strong></td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;"><strong>+1</strong></td>
+</tr>
+<tr>
+<td>FF báo kết thúc (<code>window_done</code>)</td>
+<td><code>_189_</code></td>
+<td style="text-align: right;"><strong>1</strong></td>
+<td style="text-align: right;">0 (bị bỏ quên)</td>
+<td style="text-align: right;"><strong>+1</strong></td>
+</tr>
+<tr>
+<td>Thanh ghi chốt (<code>result_count[8:0]</code>)</td>
+<td><code>_190_</code> … <code>_198_</code></td>
+<td style="text-align: right;"><strong>9</strong></td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;"><strong>+1</strong></td>
+</tr>
+<tr>
+<td><strong>TỔNG</strong></td>
+<td><code>dfxtp_1 × 27</code></td>
+<td style="text-align: right;"><strong>27</strong></td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;"><strong>+3</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Kết luận: KHÔNG khớp 8+8+8 = 24. Thực đo 27.</strong> Ba ô chênh lệch được giải thích hết, không
+còn ô nào không rõ nguồn gốc:</p>
+<ol>
+<li><strong>+1 ở <code>result_count</code></strong> — <em>chính đáng</em>. Cửa sổ 256 mẫu nên kết quả tối đa là <strong>256</strong>, cần
+   9 bit. Charter mục 8 ghi “kết quả 255” là nhầm lẫn số học: 256 mẫu cho 257 giá trị khả dĩ.</li>
+<li><strong>+1 ở <code>window_done</code></strong> — <em>chính đáng</em>. Ước lượng 8+8+8 của Charter chỉ đếm ba thanh ghi
+   dữ liệu, quên mất xung báo. Đăng ký <code>window_done</code> là quyết định đúng: nó làm xung sạch,
+   không glitch, dùng được làm strobe cho tầng ngoài.</li>
+<li><strong>+1 ở <code>event_count</code></strong> — <strong>KHÔNG chính đáng, và đây là phát hiện đáng giá nhất của bài.</strong>
+   <code>event_count[8]</code> chứng minh được là luôn bằng 0 (INV-7). Nó tồn tại <strong>chỉ vì</strong>
+   <code>event_count</code> được đưa ra cổng top làm tín hiệu quan sát; nếu nó là tín hiệu nội bộ,
+   Yosys sẽ tự gỡ và số FF còn <strong>26</strong> — <strong>lọt đúng vào dải 24–26 của Charter</strong>.</li>
+</ol>
+<p>Cách kiểm chứng phát biểu 3 mà không cần sửa RTL của thầy: thêm assertion
+<code>assert(event_count[8] == 1'b0)</code> vào testbench (ca <strong>TC-B5</strong> trong <code>corner_cases.md</code> §5).
+Nếu assertion này chạy hết mọi ca mà không vi phạm, INV-7 được xác nhận bằng mô phỏng.</p>
+<p><strong>Bài học tổng quát:</strong> <em>mọi tín hiệu gỡ lỗi đưa ra cổng top đều là một cam kết phần cứng</em>.
+Trình tổng hợp không được phép tối ưu cổng ra của module top, kể cả khi chứng minh được nó
+là hằng số.</p>
+<h2 id="9-nhung-cho-sinh-vien-hay-sai-va-cach-phat-hien">9. Những chỗ sinh viên hay sai và cách phát hiện</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sai lầm</th>
+<th>Hậu quả</th>
+<th>Phát hiện bằng bằng chứng nào</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Dùng gán chặn <code>=</code> trong <code>always_ff</code> ở chu kỳ chốt</td>
+<td><code>result_count</code> chỉ bằng 0 hoặc 1, mất cả cửa sổ</td>
+<td>Chạy cửa sổ có ≥ 2 sự kiện; testbench dòng 47 khẳng định <code>result_count == 3</code> → FAIL ngay</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Chốt <code>event_count</code> thay vì <code>completed_count</code></td>
+<td>Mất đúng 1 khi mẫu cuối là sự kiện — <strong>99 % ca vẫn PASS</strong></td>
+<td>Phải có ca đặt sự kiện <strong>đúng tại chu kỳ 256</strong> (dòng 43). Không có ca này thì lỗi lọt</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Đặt <code>terminal</code> tại <code>== 8'd256</code></td>
+<td>Bộ so sánh 8 bit <strong>không bao giờ</strong> đúng → <code>window_done</code> không bao giờ lên</td>
+<td>Waveform: <code>window_done</code> phẳng 0 mãi. Hoặc netlist: mạch AND8 bị Yosys rút thành hằng <code>0</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Dùng <code>&gt;=</code> thay <code>&gt;</code> khi so ngưỡng</td>
+<td>Đếm dư mọi mẫu bằng đúng ngưỡng</td>
+<td>Testbench dòng 62–64: 255 mẫu bằng 100 với <code>threshold = 100</code> phải cho <code>result_count == 1</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Khai <code>result_count</code> chỉ 8 bit</td>
+<td>Kết quả 256 quấn về 0 — <em>tệ nhất có thể</em>: “rung dữ dội” báo thành “không rung”</td>
+<td>Ca 256 mẫu đều vượt (dòng 67–69) → FAIL</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Quên xoá <code>event_count</code> ở chu kỳ chốt</td>
+<td>Kết quả cộng dồn vô hạn qua các cửa sổ</td>
+<td>Kiểm cửa sổ <strong>thứ hai</strong>, không chỉ cửa sổ đầu (dòng 56–59)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Quên gán một thanh ghi trong nhánh <code>if (!rst_n)</code></td>
+<td>Mô phỏng RTL vẫn PASS, nhưng gate-level giữ <code>X</code> vĩnh viễn</td>
+<td>Mô phỏng netlist với mọi FF khởi tạo <code>X</code> (<code>corner_cases.md</code> §7, <strong>chưa chạy</strong>)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Tin rằng “256 chu kỳ = 1 giây”</td>
+<td>Cửa sổ sai hàng nghìn lần nếu <code>f_clk</code> không phải ~256 Hz</td>
+<td>Đọc RTL: không có bộ chia tần nào; 27 FF đã dùng hết cho ba thanh ghi đã biết</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Đổi <code>threshold</code> giữa cửa sổ</td>
+<td>Kết quả là tổng của các so sánh với ngưỡng khác nhau — vô nghĩa</td>
+<td>Đọc RTL: <code>threshold</code> không được chốt ở đâu cả. Chưa có assertion nào bắt lỗi này</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Báo “C06 chạy được ở 100 MHz” vì SDC ghi 10 ns</td>
+<td>Phát biểu vượt mức</td>
+<td>10 ns là <strong>giả định khởi điểm</strong> (<code>timing.md</code> §3). Chưa CTS, chưa routing, một góc PVT</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Báo độ trễ là 4,11 ns</td>
+<td>Sai 32 %</td>
+<td>1,00 ns trong đó là <code>set_input_delay</code>; phần của mạch là 3,11 ns</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="10-cau-hoi-mentor-nen-dat-khi-bao-ve">10. Câu hỏi mentor nên đặt khi bảo vệ</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Câu hỏi</th>
+<th>Đáp án mong đợi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Cửa sổ dài 256 chu kỳ, vậy kết quả lớn nhất là 255 hay 256?</td>
+<td><strong>256</strong>. Testbench dòng 68 khẳng định <code>result_count == 256</code>. Charter mục 8 ghi 255 là nhầm số học; cần chốt lại với thầy</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Chỉ ra dòng nào bảo đảm mẫu của chu kỳ 256 được tính vào cửa sổ đó</td>
+<td>Dòng 31: <code>result_count &lt;= completed_count</code>, mà <code>completed_count = event_count + event_now</code> (dòng 18). Nếu chốt thẳng <code>event_count</code> là mất 1</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Chốt và xoá <code>event_count</code> cùng một cạnh — vì sao không mất số liệu?</td>
+<td>Gán <strong>không chặn</strong> <code>&lt;=</code>: mọi vế phải tính từ giá trị cũ. Phần cứng: <code>completed_count</code> là dây tổ hợp từ <code>Q</code>, đi vào <code>D</code>; <code>Q</code> cũ còn nguyên tới lúc cạnh xảy ra</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Bộ đếm sự kiện cần mấy bit? Vì sao RTL dùng 9?</td>
+<td>Cần <strong>8</strong> — INV-7 chứng minh <code>event_count ≤ 255</code>. RTL dùng 9 nên có 1 FF hằng số 0, không gỡ được vì là cổng ra top</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Tổng FF là 27 nhưng Charter nói 24–26. Bóc tách và phán xử</td>
+<td>8 + 9 + 1 + 9. +1 chính đáng (kết quả tới 256), +1 chính đáng (<code>window_done</code> bị Charter bỏ quên), +1 <strong>không</strong> chính đáng (<code>event_count[8]</code>)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Đường tới hạn đi qua đâu? Phần nào tốn nhất?</td>
+<td><code>sample_in[0]</code> → <strong>bộ so sánh</strong> (6 <code>maj3_1</code>, 2,45 ns) → <code>event_now</code> → <strong>bộ tăng</strong> (<code>nor4</code>+<code>nand4</code>+<code>xor2</code>, 0,46 ns) → mux → <code>result_count[8]</code>. So sánh tốn gấp 5 lần cộng</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Vì sao so sánh đắt hơn cộng, dù cùng là chuỗi carry?</td>
+<td>Cộng với <strong>hằng số</strong> <code>+0/+1</code> biến carry thành AND thuần → gom được thành cây (2 tầng). So sánh hai <strong>biến</strong> buộc carry nối tiếp 8 tầng <code>maj3</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>C06 có FSM không? Mealy hay Moore?</td>
+<td><strong>Có</strong> — <code>window_count</code> là biến trạng thái, 256 trạng thái, mã hoá nhị phân đếm, 0 mã thừa. <code>window_done</code> là đầu ra <strong>Moore đã đăng ký</strong>: <code>D</code> của nó chỉ phụ thuộc trạng thái, không chạm <code>sample_in</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>Nếu một bit của <code>window_count</code> bị lật do nhiễu thì sao?</td>
+<td>Máy <strong>tự phục hồi</strong> trong ≤ 256 chu kỳ. Không có mã bất hợp lệ nên không thể treo. Hậu quả: lệch pha cửa sổ và một cửa sổ có độ dài sai</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Charter mục 8 yêu cầu ca “xen kẽ”. Nó nằm ở đâu trong testbench?</td>
+<td><strong>Không có.</strong> Mô hình Python có mẫu <code>i % 7</code> nhưng không chạy qua RTL. Đây là ca bắt buộc còn thiếu (TC-B2)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Slack 5,76 ns có nghĩa là chạy được ở bao nhiêu MHz?</td>
+<td><strong>Không kết luận được.</strong> Chưa CTS (skew = 0), chưa routing (không ký sinh RC), một góc PVT. Cần STA sau routing ở nhiều góc</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Nếu bỏ thanh ghi chốt thì được và mất gì?</td>
+<td>Được: −9 FF trong 27, mà FF chiếm <strong>92,8 %</strong> công suất. Mất: cửa sổ đọc của tầng ngoài từ 256 chu kỳ xuống <strong>1</strong> chu kỳ</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="11-gioi-han-da-chung-minh-duoc-gi-chua-chung-minh-duoc-gi">11. Giới hạn: đã chứng minh được gì, chưa chứng minh được gì</h2>
+<p><strong>Đã chứng minh (có bằng chứng do chính lần chạy này sinh ra):</strong></p>
+<ol>
+<li>Mô hình chuẩn Python độc lập chạy PASS (<code>python_reference_run.log</code>).</li>
+<li>Mô phỏng RTL chạy hết testbench, không assertion nào vi phạm (<code>simulation.log</code>).</li>
+<li>RTL tổng hợp được thành 113 standard cell sky130, trong đó <strong>27</strong> ô nhớ, diện tích
+   <strong>1012,2208 µm²</strong> (<code>synth_stat.txt</code>).</li>
+<li>Bóc tách 27 FF về đúng từng thanh ghi, khớp tên instance trong netlist (§8).</li>
+<li>Đường tới hạn xác định được: <code>sample_in[0] → result_count[8]</code>, 13 cell, arrival 4,11 ns,
+   slack 5,76 ns với ràng buộc giả định (<code>timing_report_max.txt</code>).</li>
+<li>Tỷ lệ công suất tuần tự / tổ hợp = 92,8 % / 7,2 % (<code>power_report.txt</code>).</li>
+</ol>
+<p><strong>Chưa chứng minh:</strong></p>
+<ol>
+<li><strong>Chưa phủ hết Charter mục 8.</strong> Thiếu ca “xen kẽ” và thiếu cửa sổ cho kết quả 0 — cả hai
+   là ca <strong>bắt buộc</strong>. 8 ca bổ sung đã đề xuất ở <code>corner_cases.md</code> §5, chưa chạy.</li>
+<li><strong>Lớp L1 chưa thực sự hoạt động.</strong> <code>c06_reference.sv</code> tồn tại nhưng testbench không khởi
+   tạo nó; không có đối chiếu tự động với mô hình độc lập.</li>
+<li><strong>Chưa chạy gate-level.</strong> Chưa chứng minh <code>X</code> lúc cấp nguồn bị xoá sạch, chưa có
+   X-propagation check.</li>
+<li><strong>Chưa chạy P&amp;R.</strong> Mọi số timing là <strong>sau tổng hợp</strong>, clock lý tưởng (skew = 0), không
+   ký sinh RC, một góc PVT <code>tt_025C_1v80</code>. Độ trễ thật sau routing sẽ <strong>lớn hơn</strong> 4,11 ns.</li>
+<li><strong>Không có phát biểu nào về tần số tối đa.</strong></li>
+<li><strong>Chưa chứng minh khối phù hợp ứng dụng.</strong> “256 chu kỳ” chỉ bằng “một giây” nếu tầng
+   ngoài chọn <code>f_clk</code> phù hợp; và không có <code>sample_valid</code> nên mẫu giữ nguyên sẽ bị đếm lại.</li>
+<li><strong>Chưa chạy DRC/LVS, chưa sinh GDSII.</strong> Không có phát biểu nào về sign-off, tape-out,
+   chế tạo hay đo sau chế tạo — Charter mục 3 xếp những việc đó ngoài phạm vi.</li>
+</ol>
+<p><strong>Bốn điểm CHƯA THOẢ so với Charter</strong> đã ghi đầy đủ ở đầu <code>02_SPECIFICATION/functional_spec.md</code>
+(W-1 … W-4). RTL <strong>không bị sửa</strong> — mọi đề nghị sửa (đặc biệt đề nghị thu <code>event_count</code>
+xuống 8 bit ở <code>tradeoff.md</code> §3) đều cần thầy duyệt trước.</p>
+<hr>
+<p><em>Phiên bản: v1.0 · Ngày: 2026-09-24</em></p>
+</main>
+<footer class="doc">
+  Tài liệu sinh từ <code>implementation-notes_C06.md</code>.
+  Mọi số liệu đều kèm công cụ, phiên bản và lệnh tái lập trong
+  <code>07_TRACEABILITY/evidence_index.md</code>.
+</footer>
+</div>
+<script>
+(function(){
+  var b=document.createElement('button');
+  b.className='themebtn'; b.type='button';
+  function lbl(){var t=document.documentElement.getAttribute('data-theme');
+    return t==='dark'?'Nen sang':(t==='light'?'Nen toi':'Doi nen');}
+  b.textContent=lbl();
+  try{var s=localStorage.getItem('rtl2gds-theme'); if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}
+  b.textContent=lbl();
+  b.addEventListener('click',function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var mq=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next=cur?(cur==='dark'?'light':'dark'):(mq?'light':'dark');
+    document.documentElement.setAttribute('data-theme',next);
+    try{localStorage.setItem('rtl2gds-theme',next);}catch(e){}
+    b.textContent=lbl();
+  });
+  document.body.appendChild(b);
+})();
+</script>
+</body>
+</html>
