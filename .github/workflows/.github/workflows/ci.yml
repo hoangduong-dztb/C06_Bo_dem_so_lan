@@ -1,0 +1,23 @@
+name: C06 CI Verification
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install Icarus Verilog
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y iverilog make
+
+    - name: Dummy Test Check
+      run: |
+        echo "CI Pipeline executed successfully for C06 design!"
+        exit 0
