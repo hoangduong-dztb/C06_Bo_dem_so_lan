@@ -1,0 +1,5 @@
+
+15. Executing PROC_DLATCH pass (convert process syncs to latches).
+No latch inferred for signal `\c06_core.\event_now' from process `\c06_core.$proc$/home/pc/C06/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/04_IMPLEMENTATION/rtl/c06_core.sv:15$1'.
+No latch inferred for signal `\c06_core.\terminal' from process `\c06_core.$proc$/home/pc/C06/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/04_IMPLEMENTATION/rtl/c06_core.sv:15$1'.
+No latch inferred for signal `\c06_core.\completed_count' from process `\c06_core.$proc$/home/pc/C06/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/04_IMPLEMENTATION/rtl/c06_core.sv:15$1'.

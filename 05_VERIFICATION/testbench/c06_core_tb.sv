@@ -28,13 +28,29 @@ module c06_core_tb;
     endtask
 
     initial begin
+		$dumpfile("waveforms/c06_core.vcd");
+        $dumpvars(0, c06_core_tb);
+
         clk = 0;
         rst_n = 1;
         sample_in = 0;
         threshold = 8'd100;
 
         reset_dut();
+		// --- CA TỰ NGHĨ 1: Lọc nhiễu tĩnh (Mẫu < Ngưỡng) ---
+        threshold = 8'd100;
+        for (int i=1; i<=256; i++) apply_cycle(8'd50);
+        assert(result_count == 9'd0)
+            else $fatal(1,"Ca tu nghi 1 that bai: %0d",result_count);
 
+        // --- CA TỰ NGHĨ 2: Biên đáy tuyệt đối (0 > 0) ---
+        threshold = 8'd0;
+        for (int i=1; i<=256; i++) apply_cycle(8'd0);
+        assert(result_count == 9'd0)
+            else $fatal(1,"Ca tu nghi 2 that bai: %0d",result_count);
+
+        // --- QUAN TRỌNG: Trả lại ngưỡng 100 cho các ca gốc phía sau ---
+        threshold = 8'd100;
         // Window 1:
         // events at cycles 1, 255, 256.
         apply_cycle(8'd101);
@@ -70,5 +86,6 @@ module c06_core_tb;
 
         $display("C06 core verification PASS");
         $finish;
+		
     end
 endmodule

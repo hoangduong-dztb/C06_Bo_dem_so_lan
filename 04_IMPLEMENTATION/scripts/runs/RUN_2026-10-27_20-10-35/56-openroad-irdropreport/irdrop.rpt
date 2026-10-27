@@ -1,0 +1,26 @@
++ analyze_power_grid -net VPWR -voltage_file /home/pc/C06/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/04_IMPLEMENTATION/scripts/runs/RUN_2026-10-27_20-10-35/56-openroad-irdropreport/net-VPWR.csv
+[INFO PSM-0040] All shapes on net VPWR are connected.
+########## IR report #################
+Net              : VPWR
+Corner           : nom_tt_025C_1v80
+Total power      : 2.30e-04 W
+Supply voltage   : 1.80e+00 V
+Worstcase voltage: 1.80e+00 V
+Average voltage  : 1.80e+00 V
+Average IR drop  : 4.69e-05 V
+Worstcase IR drop: 1.68e-04 V
+Percentage drop  : 0.01 %
+######################################
++ analyze_power_grid -net VGND -voltage_file /home/pc/C06/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/04_IMPLEMENTATION/scripts/runs/RUN_2026-10-27_20-10-35/56-openroad-irdropreport/net-VGND.csv
+[INFO PSM-0040] All shapes on net VGND are connected.
+########## IR report #################
+Net              : VGND
+Corner           : nom_tt_025C_1v80
+Total power      : 2.30e-04 W
+Supply voltage   : 0.00e+00 V
+Worstcase voltage: 1.18e-04 V
+Average voltage  : 4.18e-05 V
+Average IR drop  : 4.18e-05 V
+Worstcase IR drop: 1.18e-04 V
+Percentage drop  : 0.01 %
+######################################

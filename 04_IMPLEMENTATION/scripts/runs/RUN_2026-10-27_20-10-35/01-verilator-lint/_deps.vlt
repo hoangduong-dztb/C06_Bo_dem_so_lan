@@ -1,0 +1,5 @@
+`verilator_config
+lint_off -rule DECLFILENAME
+lint_off -rule EOFNEWLINE
+lint_off -rule UNDRIVEN -file "/home/pc/C06/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/04_IMPLEMENTATION/scripts/runs/RUN_2026-10-27_20-10-35/tmp/601f9019922c4c6b900d6752fb88c7a6.bb.v"
+lint_off -rule UNUSEDSIGNAL -file "/home/pc/C06/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/C06_Bo_dem_so_lan_vuot_nguong_trong_cua_so_256_chu_ky/04_IMPLEMENTATION/scripts/runs/RUN_2026-10-27_20-10-35/tmp/601f9019922c4c6b900d6752fb88c7a6.bb.v"
